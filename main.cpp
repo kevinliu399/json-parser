@@ -4,19 +4,35 @@
 #include <stack>
 using namespace std;
 
+enum State
+{
+    START,
+    KEY,
+    COLON,
+    VALUE,
+};
+
 // use & to pass by reference
-bool matchingBrackets(ifstream& file) {
+bool matchingBrackets(ifstream& file)
+{
     stack<char> bracketStack;
     int validBracket = 0;
     char ch;
 
-    while (file.get(ch)) {
-        if (ch == '{') {
+    while (file.get(ch))
+    {
+        if (ch == '{')
+        {
             bracketStack.push(ch);
-        } else if (ch == '}') {
-            if (bracketStack.empty()) {
+        }
+        else if (ch == '}')
+        {
+            if (bracketStack.empty())
+            {
                 return false; // no matching opening bracket
-            } else {
+            }
+            else
+            {
                 bracketStack.pop();
                 validBracket++;
             }
@@ -26,18 +42,22 @@ bool matchingBrackets(ifstream& file) {
     return bracketStack.empty();
 }
 
-int main () {
-  string line;
-  ifstream myfile ("test.txt"); // ifstream -> read from stream
-  bool isMatching;
-  if (myfile.is_open())
-  {
-    isMatching = matchingBrackets(myfile);
-    cout << "Matching brackets: " << isMatching << endl;
-    myfile.close();
-  }
+bool isValidJSON(ifstream& file);
 
-  else cout << "Unable to open file"; 
+int main()
+{
+    string line;
+    ifstream myfile("test.txt"); // ifstream -> read from stream
+    bool isMatching;
+    if (myfile.is_open())
+    {
+        isMatching = matchingBrackets(myfile);
+        cout << "Matching brackets: " << isMatching << endl;
+        myfile.close();
+    }
 
-  return 0;
+    else
+        cout << "Unable to open file";
+
+    return 0;
 }
