@@ -7,57 +7,90 @@ using namespace std;
 enum State
 {
     START,
-    KEY,
-    COLON,
-    VALUE,
+    EXPECT_KEY,
+    IN_KEY,
+    EXPECT_COLON,
+    EXPECT_VALUE,
+    IN_VALUE,
+    END
 };
 
-// use & to pass by reference
-bool matchingBrackets(ifstream& file)
+bool isValidJSON(ifstream& file)
 {
-    stack<char> bracketStack;
-    int validBracket = 0;
+    State state = START;
     char ch;
+    bool inQuotes = false;
 
     while (file.get(ch))
     {
-        if (ch == '{')
+        switch (state)
         {
-            bracketStack.push(ch);
-        }
-        else if (ch == '}')
-        {
-            if (bracketStack.empty())
-            {
-                return false; // no matching opening bracket
-            }
-            else
-            {
-                bracketStack.pop();
-                validBracket++;
-            }
+            case START:
+                if (ch == '{') state = EXPECT_KEY;
+                else if (!isspace(ch)) return false;
+                break;
+
+            case EXPECT_KEY:
+                if (ch == '"') {
+                    state = IN_KEY;
+                    inQuotes = true;
+                }
+                else if (ch == '}' && state == EXPECT_KEY) state = END;
+                else if (!isspace(ch)) return false;
+                break;
+
+            case IN_KEY:
+                if (ch == '"' && !inQuotes) {
+                    state = EXPECT_COLON;
+                    inQuotes = false;
+                }
+                else if (ch == '\\') inQuotes = !inQuotes;
+                break;
+
+            case EXPECT_COLON:
+                if (ch == ':') state = EXPECT_VALUE;
+                else if (!isspace(ch)) return false;
+                break;
+
+            case EXPECT_VALUE:
+                if (ch == '"') {
+                    state = IN_VALUE;
+                    inQuotes = true;
+                }
+                else if (!isspace(ch)) return false;
+                break;
+
+            case IN_VALUE:
+                if (ch == '"' && !inQuotes) {
+                    state = EXPECT_KEY;
+                    inQuotes = false;
+                }
+                else if (ch == '\\') inQuotes = !inQuotes;
+                break;
+
+            case END:
+                if (!isspace(ch)) return false;
+                break;
         }
     }
 
-    return bracketStack.empty();
+    return state == END;
 }
-
-bool isValidJSON(ifstream& file);
 
 int main()
 {
-    string line;
-    ifstream myfile("test.txt"); // ifstream -> read from stream
-    bool isMatching;
-    if (myfile.is_open())
+    string filename = "test.txt";  // Change this to your test file
+    ifstream file(filename);
+    
+    if (!file.is_open())
     {
-        isMatching = matchingBrackets(myfile);
-        cout << "Matching brackets: " << isMatching << endl;
-        myfile.close();
+        cout << "Unable to open file: " << filename << endl;
+        return 1;
     }
 
-    else
-        cout << "Unable to open file";
+    bool isValid = isValidJSON(file);
+    cout << "Is valid JSON: " << (isValid ? "Yes" : "No") << endl;
 
+    file.close();
     return 0;
 }
